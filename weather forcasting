@@ -1,0 +1,61 @@
+WeatherApiController class
+
+public class WhetherAPIController{
+    @AuraEnabled
+    public static string getWhetherData(string city){
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint('callout:WhetherAPICredential/current.json?q='+EncodingUtil.urlEncode(city,'UTF-8'));
+        req.setMethod('GET');
+        HttpResponse res = new HttpResponse();
+        Http ht = new Http();
+        system.debug('--url--'+req.getEndpoint());
+        res =ht.send(req);
+           System.debug('--data--'+ res.getBody());
+        return res.getBody();
+                }
+        }
+
+HTML file
+<template>
+    <lightning-card title="Weather Forecasting">
+     <div class="slds-m-around_medium">
+        <lightning-input label="Enter CIty" onchange={handleCity}>
+
+        </lightning-input>
+     </div>
+   <lightning-button class="slds-m-around_medium" label="Check Weather" variant="brand" onclick={handleChange}>
+
+   </lightning-button>
+   <div if:true={weatherIcon}>
+    <img src={weatherIcon} alt="weather icon fot found"/>
+    <strong>{weatherText}</strong>
+   </div>
+    </lightning-card>
+</template>
+
+JSFILE
+
+import { LightningElement } from 'lwc';
+import getWhetherData from '@salesforce/apex/WhetherAPIController.getWhetherData'
+export default class WhatherAPIApp extends LightningElement {
+city;
+weatherIcon;
+weatherText;
+
+    handleCity(event){
+     this.city = event.target.value;
+    }
+    handleChange(){
+        getWhetherData({city:this.city})
+        .then(response=>{
+            let weatherParseData = JSON.parse(response);
+            this.weatherIcon = weatherParseData.current.condition.icon;
+            this.weatherText =weatherParseData.current.condition.text
+        })
+        .catch(error=>{
+            this.weatherText ='City Not Found';
+            console.error('--error-->',JSON.stringify(error));
+        })
+
+    } 
+}
